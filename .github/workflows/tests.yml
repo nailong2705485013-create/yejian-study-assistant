@@ -1,0 +1,25 @@
+name: Python tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install dependencies (Tsinghua first)
+        run: python -X utf8 install_packages.py -r requirements.txt
+      - name: Run tests without API credentials or Office automation
+        run: python -X utf8 -m unittest discover -s tests -v

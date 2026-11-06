@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>页间 · 资料学习助手</title><link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/" aria-label="页间首页"><span class="brand-mark">页</span>页间<span class="brand-sub">STUDY DESK</span></a><span class="local-badge"><span class="dot"></span>本地工作台</span></header>
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="section-label">YOUR MATERIALS <span>01</span></div>
+      <h1>从一份讲义开始。</h1>
+      <p class="muted">让资料变成知识，让复习有据可循。</p>
+      <label class="dropzone" id="dropzone" tabindex="0">
+        <input type="file" id="file" accept=".pdf,.pptx,.txt,.md" hidden>
+        <span class="upload-icon">↥</span><strong>点击或拖入学习资料</strong><span>PDF / PPTX / TXT / Markdown · 最多 50 MiB</span>
+      </label>
+      <button class="text-button" id="sample" type="button">没有资料？试试示例讲义 ↗</button>
+      <div class="file-info hidden" id="file-info"></div>
+      <details class="range-settings"><summary>长资料分批与请求预算</summary><label class="field-label" for="page-range">本批页码范围</label><input id="page-range" type="text" placeholder="留空为全部，例如1-8,12"><p class="micro">PDF/PPTX使用原文件页序。每批最多60,000字、24个文字段；PPTX图片另限24页，长资料分批导入。</p><label class="field-label" for="request-budget">本次请求上限（含修正）</label><input id="request-budget" type="number" min="1" max="200" value="120"><button type="button" class="text-button" id="reinspect">更新导入预览 ↗</button></details>
+      <label class="field-label" for="focus">这次想学什么？</label>
+      <textarea id="focus" rows="3" maxlength="500" placeholder="例如：准备期末考试，重点掌握核心概念与易混淆点。"></textarea>
+      <div class="counts"><label>练习题<select id="questions"><option value="5">5 道</option><option value="8" selected>8 道</option><option value="12">12 道</option></select></label><label>复习卡片<select id="cards"><option value="8">8 张</option><option value="12" selected>12 张</option><option value="20">20 张</option></select></label></div>
+      <label class="field-label" for="concurrency">模型并发数</label><select id="concurrency"><option value="1">1 路 · 串行</option><option value="2" selected>2 路</option><option value="3">3 路</option><option value="4">4 路</option><option value="5">5 路</option><option value="6">6 路</option><option value="7">7 路</option><option value="8">8 路</option></select>
+      <p class="micro" id="concurrency-status" role="status">自动保存到本机，用于新任务。按服务额度选择；出现并发限流时调低。</p>
+      <details class="key-settings" id="key-settings"><summary id="key-summary">文字模型连接</summary>
+        <label class="field-label" for="base-url">API根地址</label><input id="base-url" type="url" value="https://api.deepseek.com" spellcheck="false">
+        <label class="field-label" id="text-model-label" for="model-name">文字模型</label><select id="text-model-list" class="hidden"></select><div id="text-manual-model"><input id="model-name" type="text" value="deepseek-chat" aria-label="手动填写文字模型名" placeholder="先获取模型列表，或手动填写模型名" spellcheck="false"></div>
+        <label class="field-label" for="api-key">此服务的API Key</label><input id="api-key" type="password" autocomplete="off" placeholder="输入Key，或复用已保存的连接">
+        <label class="check-label"><input id="json-mode" type="checkbox" checked> 使用JSON模式参数</label>
+        <div class="connection-actions"><button type="button" id="text-models">获取模型列表</button><button type="button" id="text-probe">测试文字连接</button></div><p class="micro" id="text-status" role="status">填地址和Key即可获取列表，模型名可以先留空；列表不可用时手动填写，再测试连接。</p>
+      </details>
+      <details class="key-settings" id="vision-settings"><summary>视觉模型 · PPTX必填</summary>
+        <label class="check-label"><input id="reuse-text" type="checkbox"> 明确复用上方连接（模型须支持视觉）</label>
+        <div id="vision-fields"><label class="field-label" for="vision-url">视觉API根地址</label><input id="vision-url" type="url" placeholder="https://服务域名/v1" spellcheck="false">
+        <label class="field-label" id="vision-model-label" for="vision-model">视觉模型</label><select id="vision-model-list" class="hidden"></select><div id="vision-manual-model"><input id="vision-model" type="text" aria-label="手动填写视觉模型名" placeholder="从列表选择，或手动填写支持图片的模型" spellcheck="false"></div>
+        <label class="field-label" for="vision-key">视觉服务API Key</label><input id="vision-key" type="password" autocomplete="off" placeholder="独立配置，不自动借用文字Key">
+        <label class="check-label"><input id="vision-json" type="checkbox" checked> 使用JSON模式参数</label></div>
+        <div class="connection-actions"><button type="button" id="vision-models">获取模型列表</button><button type="button" id="vision-probe">测试视觉能力</button></div><p class="micro" id="vision-status" role="status">视觉测试只发送程序生成的随机数字图片。PPTX渲染依赖本机PowerPoint，建议在自己的PowerShell启动服务。</p>
+      </details>
+      <div class="connection-actions"><button type="button" id="save-connections">加密保存连接</button><button type="button" id="clear-connections">清除保存</button></div><p class="micro" id="save-status" role="status">点击保存后，下次自动复用。Key使用Windows当前用户加密，不存入浏览器。</p>
+      <label class="check-label hidden" id="visual-consent-label"><input id="visual-consent" type="checkbox"><span id="visual-destination"></span></label>
+      <p class="micro privacy" id="privacy"></p>
+      <button class="primary" id="generate" disabled>生成学习资料 <span>↗</span></button>
+      <p class="error hidden" id="error" role="alert"></p>
+      <section class="history-section"><div class="section-label">RECENT WORK <span>历史任务</span></div><div id="history"><p class="micro">正在读取历史记录…</p></div></section>
+    </aside>
+    <section class="main-panel">
+      <div class="workspace-heading"><div><div class="eyebrow">A LITTLE CLARITY, EVERY DAY</div><h2>把讲义，变成可复习的知识。</h2><p class="muted">提炼笔记 · 检查理解 · 记住重点</p></div><span class="model-tag">MODEL WORKFLOW + LANGGRAPH</span></div>
+      <div class="workflow"><span id="stage-read"><b>1</b>读取资料</span><i>→</i><span id="stage-extract"><b>2</b>提炼知识</span><i>→</i><span id="stage-generate"><b>3</b>出题 · 制卡</span><i>→</i><span id="stage-review"><b>4</b>原文审核</span></div>
+      <section class="progress-panel hidden" id="progress-panel" aria-live="polite"><div class="progress-heading"><strong id="progress-title">正在处理</strong><span id="progress-number">0%</span></div><progress id="progress" max="100" value="0"></progress><p id="progress-message" class="muted"></p><details><summary>查看 Agent 工作记录</summary><ol class="events" id="events"></ol></details></section>
+      <section class="empty-state" id="empty">
+        <div class="paper-illustration" aria-hidden="true"><div class="paper-back"></div><div class="paper-front"><span>THE LEARNING EDIT</span><b>知识有迹可循。</b><i></i><i></i><i></i><em>01 — 读懂，然后记住。</em></div><span class="paper-stamp">有<br>据</span></div>
+        <h3>你的下一次复习，从这里开始。</h3><p>导入一份讲义，我们会把它整理成三种学习方式。<br>每条内容都能回到原文，查看它从哪里来。</p>
+        <div class="feature-row"><div><span>01 / NOTES</span><strong>读懂知识</strong><p>梳理概念，保留原文依据</p></div><div><span>02 / PRACTICE</span><strong>检查理解</strong><p>先作答，再展开答案解析</p></div><div><span>03 / FLASHCARDS</span><strong>记住重点</strong><p>一问一答，也可导入 Anki</p></div></div>
+      </section>
+      <section id="results" class="hidden">
+        <div class="result-heading"><div><div class="eyebrow" id="result-date"></div><h3 id="result-name"></h3></div><span class="verified-badge" id="evidence-badge">✓ 文字引用已核验</span></div>
+        <div class="result-meta" id="result-meta"></div><div class="warnings hidden" id="warnings"></div>
+        <div class="results-toolbar"><div class="tabs" role="tablist"><button role="tab" id="tab-notes" class="active" aria-selected="true" data-tab="notes">知识笔记 <span id="count-notes">0</span></button><button role="tab" id="tab-questions" aria-selected="false" data-tab="questions">练习题 <span id="count-questions">0</span></button><button role="tab" id="tab-cards" aria-selected="false" data-tab="cards">复习卡片 <span id="count-cards">0</span></button></div><div class="downloads"><a id="download-word">Word ↙</a><a id="download-md">笔记 ↙</a><a id="download-cards">Anki 卡片 ↙</a><a id="download-json">JSON ↙</a></div></div>
+        <div id="result-content" role="tabpanel"></div>
+        <details class="audit-details"><summary>审核结果与模型用量</summary><div id="audit"></div></details>
+      </section>
+      <footer>页间 · 每一次学习，都留下一点清晰。<span>PDF / PPTX · 图片可复核 · Word导出</span></footer>
+    </section>
+  </main>
+  <dialog id="source-dialog"><div class="dialog-heading"><div><div class="eyebrow">BACK TO THE SOURCE</div><h3 id="source-title"></h3></div><button id="close-source" aria-label="关闭出处">×</button></div><p class="source-quote" id="source-quote"></p><img id="source-image" class="hidden" alt="所引用幻灯片的整页原图"><pre id="source-text"></pre><a id="source-download">下载原始资料 ↙</a></dialog>
+</body>
+</html>
